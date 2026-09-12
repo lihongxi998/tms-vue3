@@ -2,7 +2,7 @@
   <el-container class="layout-container">
     <el-aside :width="isCollapse ? '64px' : '220px'" class="layout-aside">
       <div class="logo">
-        <img src="/vite.svg" alt="Logo" class="logo-img" v-if="isCollapse" />
+        <el-icon class="logo-img" color="#409eff" size="24"><Monitor /></el-icon>
         <span class="logo-text" v-show="!isCollapse">TMS 运输管理系统</span>
       </div>
       <el-menu
@@ -117,8 +117,7 @@ const toggleCollapse = () => {
 }
 
 .logo-img {
-  width: 32px;
-  height: 32px;
+  margin-right: 10px;
 }
 
 .logo-text {
