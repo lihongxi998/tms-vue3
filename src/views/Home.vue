@@ -32,7 +32,7 @@
         </el-card>
       </el-col>
     </el-row>
-    
+
     <el-row :gutter="20" style="margin-top: 20px">
       <el-col :span="12">
         <el-card>
@@ -62,7 +62,7 @@
         </el-card>
       </el-col>
     </el-row>
-    
+
     <el-card style="margin-top: 20px">
       <template #header>
         <span>快捷操作</span>
@@ -84,6 +84,10 @@
           <el-icon><Location /></el-icon>
           线路管理
         </el-button>
+        <el-button type="warning" @click="$router.push('/transport-task')">
+          <el-icon><Van /></el-icon>
+          运输任务
+        </el-button>
         <el-button @click="$router.push('/statistics')">
           <el-icon><DataAnalysis /></el-icon>
           统计分析
@@ -95,91 +99,72 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted, onUnmounted } from 'vue'
-import { Truck, Document, User, Location, DataAnalysis } from '@element-plus/icons-vue'
-import { listVehicle, listTransportOrder } from '@/api/tms'
+import { Truck, Document, User, Location, DataAnalysis, Van } from '@element-plus/icons-vue'
+import { dashboardData, truckCount, transportTaskCount } from '@/api/tms'
 
 const statsLoading = ref(false)
 const todosLoading = ref(false)
-
 const stats = reactive({
   totalVehicles: 0,
   onlineVehicles: 0,
   todayOrders: 0,
-  completionRate: 95.5
+  completionRate: 0
 })
-
 const todoList = ref<any[]>([])
-const announcements = ref([
-  { id: 1, date: '2024-09-12', content: 'TMS系统上线运行' },
-  { id: 2, date: '2024-09-10', content: '新增实时GPS追踪功能' },
-  { id: 3, date: '2024-09-08', content: '运输统计报表优化完成' }
+const announcements = ref<any[]>([
+  { id: 1, date: '2026-09-12', content: '系统维护通知：预计今晚 22:00 - 23:00 停机维护' },
+  { id: 2, date: '2026-09-11', content: '新增车辆管理模块，支持批量导入' },
+  { id: 3, date: '2026-09-10', content: '运输任务状态流更新' }
 ])
 
-let statsTimer: ReturnType<typeof setTimeout> | null = null
-let todoTimer: ReturnType<typeof setTimeout> | null = null
+let timer: ReturnType<typeof setInterval> | null = null
 
-const loadStats = async () => {
+const loadDashboard = async () => {
   statsLoading.value = true
-  try {
-    const [vehicleRes, orderRes] = await Promise.all([
-      listVehicle({ page: 1, pageSize: 1 }),
-      listTransportOrder({ page: 1, pageSize: 100 })
-    ])
-    
-    stats.totalVehicles = vehicleRes?.total || 0
-    stats.onlineVehicles = vehicleRes?.list?.filter((v: any) => v.status === 'online').length || 0
-    const today = new Date().toISOString().split('T')[0]
-    stats.todayOrders = orderRes?.list?.filter((o: any) => o.createTime?.startsWith(today)).length || 0
-    stats.completionRate = orderRes?.total ? (orderRes.list.filter((o: any) => o.status === 'completed').length / orderRes.total * 100) : 95.5
-  } catch (error) {
-    console.error('加载统计数据失败:', error)
-  } finally {
-    statsLoading.value = false
-  }
-}
-
-const loadTodos = async () => {
   todosLoading.value = true
   try {
-    const res: any = await listTransportOrder({ status: 'pending' })
-    todoList.value = (res?.list || []).slice(0, 5).map((o: any) => ({
-      id: o.id,
-      type: 'urgent',
-      content: `运输订单 ${o.no} 待分配`
-    }))
-  } catch (error) {
-    console.error('加载待办事项失败:', error)
-  } finally {
-    todosLoading.value = false
+    const res: any = await dashboardData()
+    if (res) {
+      stats.totalVehicles = res.totalVehicles ?? stats.totalVehicles
+      stats.onlineVehicles = res.onlineVehicles ?? stats.onlineVehicles
+      stats.todayOrders = res.todayOrders ?? stats.todayOrders
+      stats.completionRate = res.completionRate ?? stats.completionRate
+      todoList.value = res.todoList ?? []
+    }
+  } catch (e) {
+    console.error('加载工作台数据失败:', e)
+    todoList.value = []
   }
-}
-
-const startPolling = () => {
-  loadStats()
-  loadTodos()
-  
-  statsTimer = setInterval(() => {
-    loadStats()
-  }, 30000)
-  
-  todoTimer = setInterval(() => {
-    loadTodos()
-  }, 60000)
+  try {
+    const [truckRes] = await Promise.allSettled([truckCount()])
+    if (truckRes.status === 'fulfilled' && truckRes.value) {
+      stats.totalVehicles = truckRes.value.total ?? stats.totalVehicles
+      stats.onlineVehicles = truckRes.value.online ?? stats.onlineVehicles
+    }
+  } catch (e) {
+    console.error('加载车辆统计失败:', e)
+  }
+  statsLoading.value = false
+  todosLoading.value = false
 }
 
 onMounted(() => {
-  startPolling()
+  loadDashboard()
+  timer = setInterval(loadDashboard, 30000)
 })
 
 onUnmounted(() => {
-  if (statsTimer) clearInterval(statsTimer)
-  if (todoTimer) clearInterval(todoTimer)
+  if (timer) clearInterval(timer)
 })
 </script>
 
 <style scoped>
-.home-page { padding: 0; }
-.stat-card { text-align: center; }
-.stat-card :deep(.el-statistic__head) { font-size: 14px; color: #909399; }
-.stat-card :deep(.el-statistic__content) { font-size: 28px; font-weight: bold; color: #303133; }
+.home-page {
+  background: #f0f2f5;
+  padding: 0;
+}
+
+.stat-card {
+  text-align: center;
+}
 </style>

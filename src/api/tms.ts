@@ -2,107 +2,96 @@ import request from '@/utils/request'
 
 export interface Vehicle {
   id: number
-  plateNo: string
-  model: string
-  capacity: number
-  status: string
+  licensePlate: string
+  truckTypeName: string
+  truckTypeId: number
+  driverNum: number
+  workStatus: string | number
+  deviceGpsId: string
+  allowableLoad: string
+  allowableVolume: string
 }
 
 export interface Driver {
   id: number
   name: string
-  phone: string
-  licenseNo: string
-  status: string
+  age: number
+  drivingAge: number
+  mobile: string
+  truck?: { licensePlate: string } | null
+  agency?: { name: string } | null
+  workStatus: string | number | null
 }
 
 export interface TransportLine {
   id: number
+  number: string
   name: string
-  origin: string
-  destination: string
+  transportLineTypeName?: string
+  startAgency?: { name: string } | null
+  endAgency?: { name: string } | null
   distance: number
-  duration: number
+  cost: number
+  estimatedTime: number
+  trips?: any[]
 }
 
 export interface TransportOrder {
-  id: number
-  no: string
-  lineId: number
-  lineName: string
-  vehicleId: number
-  vehiclePlate: string
-  driverId: number
-  driverName: string
-  status: string
+  id: string
+  waybillNo?: string
   createTime: string
+  status: number | string
+  senderName: string
+  senderPhone: string
+  senderAddress?: string
+  receiverName: string
+  receiverPhone: string
+  receiverAddress?: string
+  pickupType: number | string
+  payType: number | string
+  paymentStatus: number | string
 }
+
+// 工作台数据
+export const dashboardData = () => request.get({ url: '/workspace' })
 
 // 车辆管理
-export const listVehicle = (params?: any) => {
-  return request.get({ url: '/tms/transit/vehicle/list', params })
-}
-
-export const addVehicle = (data: any) => {
-  return request.post({ url: '/tms/transit/vehicle/create', data })
-}
-
-export const updateVehicle = (id: number, data: any) => {
-  return request.put({ url: `/tms/transit/vehicle/update/${id}`, data })
-}
-
-export const delVehicle = (id: number) => {
-  return request.delete({ url: `/tms/transit/vehicle/delete/${id}` })
-}
+export const truckList = (params: any) => request.get({ url: '/base/truck/page', params })
+export const truckCount = () => request.get({ url: '/base/truck/count' })
+export const truckTypeList = () => request.get({ url: '/base/truck/type/findAll' })
+export const truckAdd = (data: any) => request.post({ url: '/base/truck', data })
+export const truckUpdate = (id: number, data: any) => request.put({ url: `/base/truck/${id}`, data })
+export const truckDel = (id: number) => request.delete({ url: `/base/del/${id}` })
+export const truckEnable = (id: number) => request.put({ url: `/base/truck/enable/${id}` })
+export const truckDisable = (id: number) => request.put({ url: `/base/truck/disable/${id}` })
 
 // 司机管理
-export const listDriver = (params?: any) => {
-  return request.get({ url: '/tms/transit/driver/list', params })
-}
-
-export const addDriver = (data: any) => {
-  return request.post({ url: '/tms/transit/driver/create', data })
-}
-
-export const updateDriver = (id: number, data: any) => {
-  return request.put({ url: `/tms/transit/driver/update/${id}`, data })
-}
-
-export const delDriver = (id: number) => {
-  return request.delete({ url: `/tms/transit/driver/delete/${id}` })
-}
+export const driverList = (params: any) => request.get({ url: '/sys/driver/page', params })
+export const driverAdd = (data: any) => request.post({ url: '/sys/driver/insertDriver', data })
+export const driverUpdate = (id: number, data: any) => request.put({ url: `/sys/driver/driver/${id}`, data })
+export const driverDetail = (id: number) => request.get({ url: `/sys/driver/driver/${id}` })
 
 // 线路管理
-export const listLine = (params?: any) => {
-  return request.get({ url: '/tms/transport/line/list', params })
-}
+export const lineList = (data: any) => request.post({ url: '/base/transportLine/page', data })
+export const lineAdd = (data: any) => request.post({ url: '/base/transportLine', data })
+export const lineUpdate = (id: number, data: any) => request.put({ url: `/base/transportLine/${id}`, data })
+export const lineDel = (id: number) => request.delete({ url: `/base/transportLine/${id}` })
+export const lineDetail = (id: number) => request.get({ url: `/base/transportLine/${id}` })
+export const lineTypeList = () => request.get({ url: '/web-manager/common/transportLineType/simple' })
 
-export const addLine = (data: any) => {
-  return request.post({ url: '/tms/transport/line/create', data })
-}
+// 订单管理
+export const orderList = (data: any) => request.post({ url: '/order-manager/order/page', data })
+export const orderDetail = (id: string) => request.get({ url: `/order-manager/order/${id}` })
 
-export const updateLine = (id: number, data: any) => {
-  return request.put({ url: `/tms/transport/line/update/${id}`, data })
-}
+// 运单管理
+export const waybillList = (data: any) => request.post({ url: '/transport-order-manager/page', data })
+export const waybillCount = () => request.get({ url: '/transport-order-manager/count' })
+export const waybillDetail = (id: string) => request.get({ url: `/transport-order-manager/${id}` })
 
-export const delLine = (id: number) => {
-  return request.delete({ url: `/tms/transport/line/delete/${id}` })
-}
-
-// 运输订单
-export const listTransportOrder = (params?: any) => {
-  return request.get({ url: '/tms/transport/order/list', params })
-}
-
-export const addTransportOrder = (data: any) => {
-  return request.post({ url: '/tms/transport/order/create', data })
-}
-
-export const updateTransportOrder = (id: number, data: any) => {
-  return request.put({ url: `/tms/transport/order/update/${id}`, data })
-}
+// 运输任务管理
+export const transportTaskList = (data: any) => request.post({ url: '/base/transport-task-manager/page', data })
+export const transportTaskCount = () => request.get({ url: '/base/transport-task-manager/count' })
+export const transportTaskDetail = (id: string) => request.get({ url: `/base/transport-task-manager/${id}` })
 
 // 统计
-export const getTransportStats = (params?: any) => {
-  return request.get({ url: '/tms/stats/transport', params })
-}
+export const getTransportStats = (params?: any) => request.get({ url: '/workspace', params })
